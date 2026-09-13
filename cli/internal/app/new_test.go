@@ -126,7 +126,8 @@ func TestNewYesDefaults(t *testing.T) {
 	if code := h.run("new", "demo", "--template-source", kitTemplate(t), "--description", "demo app", "--yes"); code != 0 {
 		t.Fatalf("exit %d: %s", code, h.errb.String())
 	}
-	assertActions(t, h, dir, []string{aInit, aAdd, aCommit, aInstall})
+	// Plugin install before the commit: it rewrites .claude/settings.json.
+	assertActions(t, h, dir, []string{aInit, aInstall, aAdd, aCommit})
 	b, _ := os.ReadFile(filepath.Join(dir, "CLAUDE.md"))
 	if string(b) != "# demo\n\ndemo app\n" {
 		t.Errorf("CLAUDE.md = %q", b)
@@ -145,7 +146,7 @@ func TestNewAddsMarketplaceWhenMissing(t *testing.T) {
 	if code := h.run("new", "demo", "--template-source", kitTemplate(t), "--yes"); code != 0 {
 		t.Fatalf("exit %d: %s", code, h.errb.String())
 	}
-	assertActions(t, h, dir, []string{aInit, aAdd, aCommit, aSource, aInstall})
+	assertActions(t, h, dir, []string{aInit, aSource, aInstall, aAdd, aCommit})
 
 	h2 := newFlowHarness(t)
 	h2.runner.outs["claude plugin marketplace list --json"] = fakeOut{`[]`, 0}
@@ -282,18 +283,18 @@ func TestNewDryRunFullFlowCreatesNothing(t *testing.T) {
 func TestNewFailureMidwayKeepsFolderAndReports(t *testing.T) {
 	h := newFlowHarness(t)
 	h.runner.codes = map[string]int{"git commit -m chore: init from agent-kit template": 1}
+	h.runner.paths["code"] = "/bin/code"
 	dir := filepath.Join(h.projects, "demo")
-	code := h.run("new", "demo", "--template-source", kitTemplate(t), "--yes")
-	if code != 1 {
+	if code := h.run("new", "demo", "--template-source", kitTemplate(t), "--open", "code", "--yes"); code != 1 {
 		t.Fatalf("exit %d", code)
 	}
-	assertActions(t, h, dir, []string{aInit, aAdd, aCommit}) // plugin install never ran
+	assertActions(t, h, dir, []string{aInit, aInstall, aAdd, aCommit}) // open never ran
 	if _, err := os.Stat(filepath.Join(dir, "CLAUDE.md")); err != nil {
 		t.Fatal("folder must be kept")
 	}
 	e := h.errb.String()
-	for _, s := range []string{`step "git commit" failed`, "done:     fetch template, create folder, git init, write template, fill placeholders, git add",
-		"not done: install plugin", "Remove-Item -Recurse -Force '" + dir + "'"} {
+	for _, s := range []string{`step "git commit" failed`, "done:     fetch template, create folder, git init, write template, fill placeholders, install plugin, git add",
+		"not done: open in code", "Remove-Item -Recurse -Force '" + dir + "'"} {
 		if !strings.Contains(e, s) {
 			t.Errorf("missing %q in:\n%s", s, e)
 		}

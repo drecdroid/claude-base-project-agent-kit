@@ -111,13 +111,9 @@ func (a *app) runNew(ctx context.Context, cmd *cli.Command, p *newPlan) error {
 			})
 		}
 	}
-	if p.Commit {
-		add("git add", func() error { return git("add", "-A") })
-		add("git commit", func() error { return git("commit", "-m", initCommitMessage) })
-		if p.Push {
-			add("git push", func() error { return git("push", "-u", "origin", "main") })
-		}
-	}
+	// Plugin BEFORE the first commit: `claude plugin install --scope project`
+	// rewrites .claude/settings.json (confirmed live), which otherwise leaves
+	// the brand-new repo dirty right after its first commit.
 	if p.Plugin {
 		if p.AddSource {
 			add("add kit marketplace", func() error {
@@ -129,6 +125,13 @@ func (a *app) runNew(ctx context.Context, cmd *cli.Command, p *newPlan) error {
 			args, _ := PluginArgs("install", "project", false)
 			return a.exec(ctx, cmd, execx.Cmd{Dir: p.Dir, Prog: "claude", Args: args}, false)
 		})
+	}
+	if p.Commit {
+		add("git add", func() error { return git("add", "-A") })
+		add("git commit", func() error { return git("commit", "-m", initCommitMessage) })
+		if p.Push {
+			add("git push", func() error { return git("push", "-u", "origin", "main") })
+		}
 	}
 	if p.Open != "none" {
 		add("open in "+p.Open, func() error { return a.openDir(ctx, cmd, p.Open, p.Dir, p.Prompt) })

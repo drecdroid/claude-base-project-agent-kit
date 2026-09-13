@@ -12,7 +12,7 @@ Be extremely concise; sacrifice grammar.
 - `plugins/agent-kit/rules.md` — GENERATED: header + `rules/*.md` sorted. `sh scripts/build-rules.sh` after every rules edit; never hand-edit.
 - `scripts/check.sh` — node-free checks (rules.md in sync + ASCII, JSON parses, versions match, LF); CI `.github/workflows/check.yml` runs it.
 - `plugins/agent-kit/agents/{orchestrator,worker}.md` — subagents.
-- `template/` — copied into new projects (LF config, short CLAUDE.md skeleton, settings enabling the plugin).
+- `template/` — copied into new projects (LF config, short CLAUDE.md skeleton, settings enabling the plugin). Placeholders: `{{project_name}}`, `{{description}}` (plain replace by `ckit new`; add new ones in `cli/internal/scaffold/fill.go` + docs).
 - `cli/` — `ckit` Go CLI, own module `github.com/drecdroid/claude-base-project-agent-kit/cli`, main at `cli/cmd/ckit`. Usage: `cli/README.md`.
 
 ## ckit (`cli/`)
@@ -23,7 +23,8 @@ Be extremely concise; sacrifice grammar.
 - Claude Desktop: `claude://code/new?folder=..&q=..`; Windows launch via `rundll32 url.dll,FileProtocolHandler`, never `cmd /c start`.
 - Tests: fake `execx.Runner` + temp home (`app.Env`); never touch real `~/.claude` / `~/.ckit`. Real plugin runs only with `CLAUDE_CONFIG_DIR=<scratch>`.
 - Kit identifiers (repo, marketplace, plugin) live in `internal/kit` — update there if renamed.
-- Part 2 (`ckit new`) = new `internal/app/cmd_new.go`; doctor already has a `new` requirement set.
+- Marketplace source = HTTPS git URL (`kit.RepoGitURL`); owner/repo shorthand clones over SSH → fails w/o known_hosts.
+- `ckit new`: gather all answers (`new_gather.go`) → doctor preflight (`new` + `github` + `source` sets) → steps (`new_run.go`). Template fetched BEFORE mkdir; never delete user folder on failure. Template = codeload tarball `*/template/**` only (`internal/scaffold`, traversal/links rejected) or `--template-source`.
 
 ## Rules for editing rules
 

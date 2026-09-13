@@ -1,8 +1,9 @@
 # ckit
 
-A small Go CLI that automates using the agent kit: config, a tool doctor, the Claude Code plugin
-marketplace ("source"), installing the `agent-kit` plugin into a project, and opening a project in
-VS Code, SmartGit or Claude Desktop. (`ckit new`, scaffolding a project from `template/`, comes next.)
+A small Go CLI that automates using the agent kit. It can create a new project from the kit
+template, manage its config, check your tools (`doctor`), add the Claude Code plugin marketplace
+("source"), install the `agent-kit` plugin into a project, and open a project in VS Code, SmartGit
+or Claude Desktop.
 
 ## Install
 
@@ -34,6 +35,61 @@ If a name isn't found, ckit suggests close matches (exact, prefix, substring, th
 every project. In a terminal it also offers the matches in a picker.
 
 ## Commands
+
+### `ckit new [name]`
+
+Creates a project from the kit's `template/`. In a terminal it asks each question; every question
+also has a flag. `--yes` (or no terminal) uses the defaults, and `--dry-run` prints every step
+without doing anything.
+
+```sh
+ckit new                                          # interactive
+ckit new my-app -d "what it is" --yes             # defaults: no GitHub repo, commit, plugin, open none
+ckit new my-app --github --visibility public --topics cli,go --homepage https://x.dev --yes
+ckit new my-app --github --open claude --dry-run  # print the whole plan
+ckit new my-app --template-source ../claude-base-project-agent-kit --yes   # local kit checkout
+ckit new my-app --ref v0.2.0 --yes                # a tag, branch or sha of the kit
+```
+
+The steps, in order. Nothing is created until all the answers are in and preflight passes:
+
+1. **Name**: letters, digits, `.`, `_` or `-`; not a Windows reserved name. The target is
+   `<projectsDir>/<name>` (or `--dir`) and must not already exist with files in it.
+2. **Preflight**: git is always required. gh and `gh auth status` are required only with
+   `--github`, and claude only when installing the plugin.
+3. **Template**: fetched first, so a failure leaves nothing behind. By default it is
+   `https://codeload.github.com/drecdroid/claude-base-project-agent-kit/tar.gz/<ref>` (ref `main`),
+   downloaded over HTTPS with no git, curl or login. Only `*/template/**` is extracted. Dotfiles
+   (`.claude/settings.json`, `.gitattributes`, `.editorconfig`) are kept byte for byte, so LF stays
+   LF. Entries with `..`, absolute paths, drive letters, backslashes, or links are rejected.
+   `--template-source` takes a local kit checkout, a template directory, or another `.tar.gz` URL
+   (forks, tests). If the repo is private or missing, the error says so and suggests
+   `--template-source`.
+4. `git init -b main` (never `master`), then the template is written and placeholders are filled.
+5. **GitHub** (`--github`; off by default): runs
+   `gh repo create <owner>/<repo> --private|--public|--internal [--description] [--homepage] [--disable-wiki] --source <dir> --remote origin`.
+   The repo is not pushed at this point. Topics are then added with `gh repo edit --add-topic`. The
+   owner defaults to your gh user (`--owner` can be an org) and the repo name to the project name.
+   The wiki is disabled by default. If gh isn't installed or logged in, ckit prints
+   `gh auth login` and continues without creating the repo.
+6. **Plugin** (`--plugin`, default yes): if the kit marketplace is missing, it is added first
+   (`--add-source`), then `claude plugin install agent-kit@claude-base-project-agent-kit --scope project -y`
+   runs in the new folder. This happens before the commit because the install rewrites
+   `.claude/settings.json`; otherwise the new repo would be dirty right after its first commit.
+7. **First commit** (`--commit`, default yes): `git add -A && git commit -m "chore: init from agent-kit template"`,
+   using your own git identity (ckit never sets `user.email`). If a repo was created, it then runs
+   `git push -u origin main` (`--push`, default yes).
+8. **Open** (`--open none|code|smartgit|claude`, default none). For `claude`, `--prompt` defaults
+   to "Fill in CLAUDE.md for this project".
+
+If a step fails, ckit stops and lists which steps were done and which weren't. It never deletes
+the folder; instead it prints the exact command to remove it (plus `gh repo delete` if a repo was
+already created).
+
+**Template placeholders.** Files in `template/` may contain `{{project_name}}` and
+`{{description}}` (one line). ckit replaces them with plain string replacement, not a template
+engine, so user text containing `{{`, `$` or `%` is inserted as-is. Binary files and unknown
+`{{...}}` are left alone.
 
 ### `ckit config`
 
@@ -67,7 +123,8 @@ Reports ok/missing, the version, the path and a fix hint for: git (and whether
 `init.defaultBranch` is set, just for information), gh and `gh auth status`, `claude --version`,
 whether the kit marketplace has been added, VS Code `code`, and SmartGit. Every check is always
 shown; `*` marks the ones `--for` requires. The exit code is 1 only when a required check fails.
-`--for` accepts: `source`, `plugin`, `open-code`, `open-smartgit`, `open-claude`, `new`, `all`.
+`--for` accepts: `source`, `plugin`, `open-code`, `open-smartgit`, `open-claude`, `new` (git),
+`github` (gh + auth), `all`.
 
 ### `ckit source add|remove|update`
 
@@ -130,7 +187,7 @@ GOOS=darwin GOARCH=arm64 go build -o /dev/null ./cmd/ckit
 ```
 
 Layout: `cmd/ckit` (main), `internal/app` (urfave/cli v3 commands, huh prompts; everything external
-comes in through `app.Env`), `internal/{config,project,launch,doctor,execx,kit}` (pure or narrow
-packages with their own tests). Adding `ckit new`: a new `internal/app/cmd_new.go` added to
-`NewCommand`'s `Commands`, using `resolveProject`/`exec`/`confirm`, `kit.*`, and `doctor`'s
-existing `new` requirement set.
+comes in through `app.Env`; `new` is split into `cmd_new.go`, `new_gather.go` and `new_run.go`),
+and `internal/{config,project,launch,doctor,execx,kit,scaffold}` (pure or narrow packages with
+their own tests; `scaffold` handles template fetch, extraction, placeholders and name
+validation).

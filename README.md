@@ -37,6 +37,7 @@ Or try once without installing: `claude --plugin-dir <clone>/plugins/agent-kit`.
 
 ```sh
 go install github.com/drecdroid/claude-base-project-agent-kit/cli/cmd/ckit@latest
+ckit new my-app                # template + git init -b main + (GitHub repo) + commit + plugin + open
 ckit doctor                    # git, gh (+auth), claude, marketplace, VS Code, SmartGit
 ckit source add                # add the marketplace
 ckit plugin install my-app     # install agent-kit into ~/Projects/my-app (--scope project)
@@ -66,9 +67,11 @@ Or `claude plugin install agent-kit@claude-base-project-agent-kit --scope projec
 
 ## New project from the template
 
-Copy `template/` contents (including dotfiles) into the new repo root, fill in `CLAUDE.md`
-(architecture, commands, testing, gotchas — project specifics only; generic rules come from the
-plugin). Use the orchestrator as the main agent with `claude --agent <name>` (check `/agents` for
+The easiest way is `ckit new <name>`. By hand: copy the contents of `template/` (including
+dotfiles) into the new repo root and replace the placeholders `{{project_name}}` and
+`{{description}}` (one line) in `CLAUDE.md`; `ckit new` does this for you. Then fill in
+`CLAUDE.md` with architecture, commands, testing and gotchas. Keep it to project specifics only;
+generic rules come from the plugin. Use the orchestrator as the main agent with `claude --agent <name>` (check `/agents` for
 the plugin-namespaced name) or let the main agent spawn it.
 
 ## Update
