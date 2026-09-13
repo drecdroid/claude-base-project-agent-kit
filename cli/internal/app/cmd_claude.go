@@ -14,7 +14,7 @@ import (
 func SourceArgs(action string) ([]string, error) {
 	switch action {
 	case "add":
-		return []string{"plugin", "marketplace", "add", kit.Repo}, nil
+		return []string{"plugin", "marketplace", "add", kit.RepoGitURL}, nil
 	case "remove":
 		return []string{"plugin", "marketplace", "remove", kit.Marketplace}, nil
 	case "update":
@@ -70,11 +70,11 @@ func (a *app) sourceCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "source",
 		Usage: "add/remove/update the kit's Claude Code plugin marketplace (user-level)",
-		UsageText: "ckit source add      # claude plugin marketplace add " + kit.Repo + "\n" +
+		UsageText: "ckit source add      # claude plugin marketplace add " + kit.RepoGitURL + "\n" +
 			"ckit source update   # claude plugin marketplace update " + kit.Marketplace + "\n" +
 			"ckit source remove --yes",
 		Commands: []*cli.Command{
-			sub("add", "claude plugin marketplace add "+kit.Repo),
+			sub("add", "claude plugin marketplace add "+kit.RepoGitURL+" (HTTPS: the owner/repo shorthand clones over SSH)"),
 			sub("remove", "claude plugin marketplace remove "+kit.Marketplace+" (confirms; --yes without a TTY)"),
 			sub("update", "claude plugin marketplace update "+kit.Marketplace),
 		},

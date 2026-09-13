@@ -109,7 +109,9 @@ func (h *harness) lastCall(t *testing.T) call {
 func TestSourceCommands(t *testing.T) {
 	h := newHarness(t)
 	cases := map[string][]string{
-		"add":    {"claude", "plugin", "marketplace", "add", "drecdroid/claude-base-project-agent-kit"},
+		// HTTPS git URL, never the owner/repo shorthand (claude clones that over
+		// SSH: fails without github.com in known_hosts, confirmed live).
+		"add":    {"claude", "plugin", "marketplace", "add", "https://github.com/drecdroid/claude-base-project-agent-kit.git"},
 		"update": {"claude", "plugin", "marketplace", "update", "claude-base-project-agent-kit"},
 		"remove": {"claude", "plugin", "marketplace", "remove", "claude-base-project-agent-kit"},
 	}

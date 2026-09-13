@@ -22,9 +22,12 @@ anything else (`scripts/check.sh` enforces it).
 Private repo: git must be able to clone it (`gh auth login` + `gh auth setup-git`).
 
 ```
-/plugin marketplace add drecdroid/claude-base-project-agent-kit
+/plugin marketplace add https://github.com/drecdroid/claude-base-project-agent-kit.git
 /plugin install agent-kit@claude-base-project-agent-kit
 ```
+
+Use the HTTPS URL. The `drecdroid/claude-base-project-agent-kit` shorthand clones over SSH, which
+fails if github.com isn't in your `known_hosts`. The marketplace name is the same either way.
 
 Or try once without installing: `claude --plugin-dir <clone>/plugins/agent-kit`.
 

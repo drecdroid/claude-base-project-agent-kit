@@ -72,10 +72,14 @@ shown; `*` marks the ones `--for` requires. The exit code is 1 only when a requi
 ### `ckit source add|remove|update`
 
 ```sh
-ckit source add        # claude plugin marketplace add drecdroid/claude-base-project-agent-kit
+ckit source add        # claude plugin marketplace add https://github.com/drecdroid/claude-base-project-agent-kit.git
 ckit source update     # claude plugin marketplace update claude-base-project-agent-kit
 ckit source remove -y  # claude plugin marketplace remove claude-base-project-agent-kit
 ```
+
+`add` uses the HTTPS git URL, not the `owner/repo` shorthand. Claude clones the shorthand over SSH,
+and that fails on machines where github.com isn't in `known_hosts`. Both forms give the marketplace
+the same name (`claude-base-project-agent-kit`), because the name comes from `marketplace.json`.
 
 ### `ckit plugin install|uninstall|update [project]`
 
