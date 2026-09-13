@@ -1,0 +1,17 @@
+{
+  "name": "claude-base-project-agent-kit",
+  "owner": {
+    "name": "drecdroid"
+  },
+  "metadata": {
+    "description": "Base agent kit: generic session rules + orchestrator/worker subagents."
+  },
+  "plugins": [
+    {
+      "name": "agent-kit",
+      "source": "./plugins/agent-kit",
+      "description": "Injects generic agent rules at session start and ships orchestrator + worker subagents.",
+      "version": "0.1.0"
+    }
+  ]
+}

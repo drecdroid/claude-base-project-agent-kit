@@ -1,0 +1,8 @@
+## Windows (mind even when building cross-platform)
+- Shell tool: commands over ~7k chars fail before running → split files into chunks, use a script or the Write tool. Heredocs collapse `\\` to `\` → no backslash-heavy heredocs.
+- Wait loops grepping a log: forward-slash path, no `2>/dev/null` (`until grep -q READY C:/tmp/x.log; do sleep 2; done`). Why: a backslash path fails silently under Git Bash; a loop spun 24 min.
+- Package-identity redirection: processes under an MSIX package identity (e.g. a terminal inside the Claude desktop app) get `%APPDATA%` writes silently redirected to `%LOCALAPPDATA%\Packages\<id>\LocalCache\Roaming`; same app launched two ways → two disconnected copies of state/keys. Keep app data in a plain folder outside `%APPDATA%`; pin third-party tools' config paths via their env vars.
+- `.cmd`/`.bat` shims (npm, npx, pnpm, tsc…): plain exec with an argv array still goes through cmd.exe's parser → arg `a&echo pwned` executes, `^` eaten, `%PATH%` expanded, `|`/`>` redirect. Resolve via PATHEXT and build the line yourself: `cmd.exe /d /s /c "<quoted prog> <cmd-escaped args>"` (split `%`), or run the underlying `.js` with `node`. Why: argument injection.
+- Kill trees with `taskkill /PID <pid> /T /F` from the true top PID (look it up from Windows by command line); MSYS/Git Bash `$$`/`$!` ≠ Windows PID; killing only the launcher leaves orphans.
+- Each new binary path listening on `0.0.0.0` pops its own Firewall prompt (unclickable unattended; every worktree copy is a new path) → bind `127.0.0.1` in dev/tests. Loopback never prompts.
+- MAX_PATH (260): deep paths break tools (SQLite `CANTOPEN` in a deep `%TEMP%` dir) → keep isolated data dirs short (`%TEMP%\app-qa`).

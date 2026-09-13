@@ -1,0 +1,11 @@
+{
+  "name": "agent-kit",
+  "displayName": "Agent Kit",
+  "version": "0.1.0",
+  "description": "Injects generic agent rules at session start (communication, agent fleet, git, process hygiene, Windows) and ships orchestrator + worker subagents.",
+  "author": {
+    "name": "drecdroid"
+  },
+  "repository": "https://github.com/drecdroid/claude-base-project-agent-kit",
+  "keywords": ["rules", "orchestrator", "subagents", "session-start"]
+}
