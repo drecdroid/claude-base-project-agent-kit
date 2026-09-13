@@ -30,3 +30,6 @@ dist/
 *.exe
 *.test
 coverage.out
+
+# Local git worktrees
+.worktrees/
