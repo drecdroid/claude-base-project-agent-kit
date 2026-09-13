@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "claude-base-project-agent-kit": {
+      "source": {
+        "source": "github",
+        "repo": "drecdroid/claude-base-project-agent-kit"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "agent-kit@claude-base-project-agent-kit": true
+  }
+}
