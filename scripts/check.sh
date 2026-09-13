@@ -46,6 +46,22 @@ for e in errs:
 sys.exit(1 if errs else 0)
 PY
 
+# ckit (cli/): gofmt, vet, tests. Skipped with a note when go is not on PATH
+# (CI installs it with setup-go); REQUIRE_GO=1 turns the skip into a failure.
+if [ -f cli/go.mod ]; then
+  GO=$(command -v go || true)
+  if [ -n "$GO" ]; then
+    unformatted=$(cd cli && gofmt -l .)
+    [ -z "$unformatted" ] || { echo "gofmt needed in cli/:" >&2; echo "$unformatted" >&2; fail=1; }
+    (cd cli && "$GO" vet ./...) || fail=1
+    (cd cli && "$GO" test ./...) || fail=1
+  elif [ "${REQUIRE_GO:-0}" = 1 ]; then
+    echo "go not on PATH (REQUIRE_GO=1)" >&2; fail=1
+  else
+    echo "note: go not on PATH; skipped cli/ checks" >&2
+  fi
+fi
+
 crlf=$(git ls-files --eol | grep -v 'i/lf' | grep -v 'i/-text' || true)
 [ -z "$crlf" ] || { echo "non-LF tracked files:" >&2; echo "$crlf" >&2; fail=1; }
 

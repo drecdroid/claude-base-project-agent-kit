@@ -9,5 +9,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Checks (rules.md in sync, JSON, structure, LF)
-        run: sh scripts/check.sh
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
+      - name: Checks (rules.md in sync, JSON, structure, LF, cli gofmt/vet/test)
+        run: REQUIRE_GO=1 sh scripts/check.sh
+      - name: Cross-compile ckit
+        working-directory: cli
+        run: |
+          for t in windows/amd64 darwin/arm64 linux/amd64; do
+            GOOS=${t%/*} GOARCH=${t#*/} go build -o /dev/null ./cmd/ckit
+          done

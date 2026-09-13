@@ -30,6 +30,7 @@ dist/
 *.exe
 *.test
 coverage.out
+/cli/ckit
 
 # Local git worktrees
 .worktrees/

@@ -28,6 +28,21 @@ Private repo: git must be able to clone it (`gh auth login` + `gh auth setup-git
 
 Or try once without installing: `claude --plugin-dir <clone>/plugins/agent-kit`.
 
+## `ckit` CLI
+
+`cli/` is a Go CLI that automates all of this. See [`cli/README.md`](cli/README.md).
+
+```sh
+go install github.com/drecdroid/claude-base-project-agent-kit/cli/cmd/ckit@latest
+ckit doctor                    # git, gh (+auth), claude, marketplace, VS Code, SmartGit
+ckit source add                # add the marketplace
+ckit plugin install my-app     # install agent-kit into ~/Projects/my-app (--scope project)
+ckit open claude my-app --prompt "hi"   # Claude Desktop deep link (it asks you to trust the folder)
+ckit config set projectsDir ~/code      # ~/.ckit/config.json
+```
+
+Every command that launches or changes something takes `--dry-run`.
+
 ## Enable per project
 
 Commit this to the project's `.claude/settings.json` (already in `template/`); Claude Code prompts
