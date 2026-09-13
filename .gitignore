@@ -1,0 +1,32 @@
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*~
+
+# Claude Code, per-user
+.claude/settings.local.json
+.claude/worktrees/
+
+# Logs
+*.log
+logs/
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Go CLI output (cli/)
+bin/
+dist/
+*.exe
+*.test
+coverage.out

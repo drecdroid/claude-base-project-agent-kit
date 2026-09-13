@@ -6,8 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/inject-rules.mjs"],
+            "command": "cat \"${CLAUDE_PLUGIN_ROOT}/rules.md\"",
             "timeout": 30
           }
         ]

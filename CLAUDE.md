@@ -7,9 +7,10 @@ Be extremely concise; sacrifice grammar.
 
 - `.claude-plugin/marketplace.json` — marketplace `claude-base-project-agent-kit`, lists `./plugins/agent-kit`.
 - `plugins/agent-kit/.claude-plugin/plugin.json` — manifest (bump `version` here AND in marketplace.json; users only get updates when it changes).
-- `plugins/agent-kit/hooks/hooks.json` — SessionStart (`startup|resume|clear|compact`), exec form `node ${CLAUDE_PLUGIN_ROOT}/hooks/inject-rules.mjs` (no shell → same on Windows/macOS/Linux; needs `node` on PATH).
-- `plugins/agent-kit/hooks/inject-rules.mjs` — concatenates `rules/*.md` sorted by name → `hookSpecificOutput.additionalContext` JSON.
-- `plugins/agent-kit/rules/*.md` — the injected rules. `NN-` prefix = order.
+- `plugins/agent-kit/hooks/hooks.json` — SessionStart (`startup|resume|clear|compact`), shell form `cat "${CLAUDE_PLUGIN_ROOT}/rules.md"`; plain-text stdout → context. No runtime: Git Bash/sh, or PowerShell fallback (`cat` = Get-Content; verified live).
+- `plugins/agent-kit/rules/*.md` — editing source. `NN-` prefix = order. ASCII only (PowerShell 5 reads BOM-less files as ANSI → mangled).
+- `plugins/agent-kit/rules.md` — GENERATED: header + `rules/*.md` sorted. `sh scripts/build-rules.sh` after every rules edit; never hand-edit.
+- `scripts/check.sh` — node-free checks (rules.md in sync + ASCII, JSON parses, versions match, LF); CI `.github/workflows/check.yml` runs it.
 - `plugins/agent-kit/agents/{orchestrator,worker}.md` — subagents.
 - `template/` — copied into new projects (LF config, short CLAUDE.md skeleton, settings enabling the plugin).
 
@@ -22,8 +23,8 @@ Be extremely concise; sacrifice grammar.
 ## Test
 
 ```sh
-node plugins/agent-kit/hooks/inject-rules.mjs --text | wc -l -c   # rules + size
-node plugins/agent-kit/hooks/inject-rules.mjs | node -e "JSON.parse(require('fs').readFileSync(0,'utf8'))"
+sh scripts/build-rules.sh && wc -l -c plugins/agent-kit/rules.md   # rebuild + size
+sh scripts/check.sh
 claude plugin validate --strict ./plugins/agent-kit
 claude plugin validate --strict .
 claude --plugin-dir ./plugins/agent-kit   # try it for one session, no install

@@ -1,0 +1,13 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checks (rules.md in sync, JSON, structure, LF)
+        run: sh scripts/check.sh
