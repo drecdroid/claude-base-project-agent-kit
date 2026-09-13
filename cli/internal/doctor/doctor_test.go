@@ -136,16 +136,22 @@ func TestClaudeMissingCascades(t *testing.T) {
 	}
 }
 
-func TestGhNotLoggedInIsWarnAndFailsNew(t *testing.T) {
+func TestGhNotLoggedInIsWarnAndFailsGithub(t *testing.T) {
 	p := healthy()
 	p.outs["gh auth status"] = out{"You are not logged into any GitHub hosts", 1}
-	r := run(t, p, Options{For: []string{"new"}})
+	r := run(t, p, Options{For: []string{"github"}})
 	c := byName(r)[CGhAuth]
 	if r.OK || c.Status != Warn || !strings.Contains(c.Fix, "gh auth login") {
 		t.Fatalf("got ok=%v %+v", r.OK, c)
 	}
 	if !run(t, p, Options{}).OK {
 		t.Fatal("gh auth is not required by the default set")
+	}
+	// `new` alone needs only git: no gh, no claude.
+	delete(p.paths, "gh")
+	delete(p.paths, "claude")
+	if !run(t, p, Options{For: []string{"new"}}).OK {
+		t.Fatal("new without github/plugin must only require git")
 	}
 }
 

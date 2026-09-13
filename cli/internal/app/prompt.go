@@ -12,8 +12,11 @@ import (
 // Prompter is every interactive prompt ckit shows. Each has a flag/non-TTY
 // equivalent; callers only reach a Prompter when Env.Interactive is true.
 type Prompter interface {
+	// Select picks one option; the first option is the default.
 	Select(title string, options []string) (string, error)
-	Confirm(title string) (bool, error)
+	Confirm(title string, def bool) (bool, error)
+	// Input asks for one line, prefilled with def; validate may be nil.
+	Input(title, description, def string, validate func(string) error) (string, error)
 	// EditConfig edits c in place (projectsDir, tool path overrides).
 	EditConfig(c *config.Config, home, goos string) error
 }
@@ -22,17 +25,33 @@ type huhPrompter struct{}
 
 func (huhPrompter) Select(title string, options []string) (string, error) {
 	var v string
+	if len(options) > 0 {
+		v = options[0]
+	}
 	err := huh.NewForm(huh.NewGroup(
 		huh.NewSelect[string]().Title(title).Options(huh.NewOptions(options...)...).Value(&v),
 	)).Run()
 	return v, err
 }
 
-func (huhPrompter) Confirm(title string) (bool, error) {
-	var v bool
+func (huhPrompter) Confirm(title string, def bool) (bool, error) {
+	v := def
 	err := huh.NewForm(huh.NewGroup(
 		huh.NewConfirm().Title(title).Affirmative("Yes").Negative("No").Value(&v),
 	)).Run()
+	return v, err
+}
+
+func (huhPrompter) Input(title, description, def string, validate func(string) error) (string, error) {
+	v := def
+	in := huh.NewInput().Title(title).Value(&v)
+	if description != "" {
+		in = in.Description(description)
+	}
+	if validate != nil {
+		in = in.Validate(validate)
+	}
+	err := huh.NewForm(huh.NewGroup(in)).Run()
 	return v, err
 }
 

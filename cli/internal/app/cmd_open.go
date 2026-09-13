@@ -8,7 +8,6 @@ import (
 
 	"github.com/urfave/cli/v3"
 
-	"github.com/drecdroid/claude-base-project-agent-kit/cli/internal/execx"
 	"github.com/drecdroid/claude-base-project-agent-kit/cli/internal/launch"
 )
 
@@ -56,35 +55,7 @@ func (a *app) open(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
-	c, _, _, err := a.loadConfig()
-	if err != nil {
-		return err
-	}
-	var x execx.Cmd
-	switch appName {
-	case "code":
-		x = launch.Code(c.CodePath, dir)
-	case "smartgit":
-		x = launch.SmartGit(a.env.GOOS, c.SmartgitPath, dir)
-		if !cmd.Bool("dry-run") {
-			if err := a.checkSmartGit(c.SmartgitPath); err != nil {
-				return err
-			}
-		}
-	case "claude":
-		u := launch.ClaudeCodeURL(dir, prompt)
-		x = launch.OpenURL(a.env.GOOS, u)
-		if cmd.Bool("dry-run") {
-			fmt.Fprintf(a.env.Stdout, "[dry-run] url: %s\n", u)
-		}
-	}
-	if err := a.exec(ctx, cmd, x, true); err != nil {
-		return err
-	}
-	if !cmd.Bool("dry-run") && appName == "claude" {
-		fmt.Fprintln(a.env.Stdout, "opened Claude Desktop; confirm the folder-trust prompt there")
-	}
-	return nil
+	return a.openDir(ctx, cmd, appName, dir, prompt)
 }
 
 func (a *app) checkSmartGit(override string) error {

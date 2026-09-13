@@ -20,14 +20,26 @@ type call struct {
 	cmd  execx.Cmd
 }
 
+type fakeOut struct {
+	out  string
+	code int
+}
+
 type fakeRunner struct {
 	calls []call
 	code  int
+	codes map[string]int     // argv joined by " " -> Run exit code
+	outs  map[string]fakeOut // argv joined by " " -> Output result
 	paths map[string]string
 }
 
+func key(c execx.Cmd) string { return strings.Join(c.Argv(), " ") }
+
 func (f *fakeRunner) Run(_ context.Context, c execx.Cmd) (int, error) {
 	f.calls = append(f.calls, call{"run", c})
+	if code, ok := f.codes[key(c)]; ok {
+		return code, nil
+	}
 	return f.code, nil
 }
 func (f *fakeRunner) Start(_ context.Context, c execx.Cmd) error {
@@ -36,6 +48,9 @@ func (f *fakeRunner) Start(_ context.Context, c execx.Cmd) error {
 }
 func (f *fakeRunner) Output(_ context.Context, c execx.Cmd) (string, int, error) {
 	f.calls = append(f.calls, call{"output", c})
+	if o, ok := f.outs[key(c)]; ok {
+		return o.out, o.code, nil
+	}
 	return "", 1, nil
 }
 func (f *fakeRunner) LookPath(p string) (string, error) {
@@ -55,9 +70,13 @@ func (p *fakePrompter) Select(title string, _ []string) (string, error) {
 	p.asked = append(p.asked, title)
 	return p.selectAnswer, nil
 }
-func (p *fakePrompter) Confirm(title string) (bool, error) {
+func (p *fakePrompter) Confirm(title string, _ bool) (bool, error) {
 	p.asked = append(p.asked, title)
 	return p.confirmAnswer, nil
+}
+func (p *fakePrompter) Input(title, _, def string, _ func(string) error) (string, error) {
+	p.asked = append(p.asked, title)
+	return def, nil
 }
 func (p *fakePrompter) EditConfig(c *config.Config, _, _ string) error {
 	c.ProjectsDir = "  ~/edited  "
@@ -69,6 +88,7 @@ type harness struct {
 	out, errb           bytes.Buffer
 	runner              *fakeRunner
 	prompter            *fakePrompter
+	script              Prompter // overrides prompter when set
 	tty                 bool
 	goos                string
 }
@@ -87,13 +107,17 @@ func newHarness(t *testing.T) *harness {
 func (h *harness) run(args ...string) int {
 	h.out.Reset()
 	h.errb.Reset()
+	var pr Prompter = h.prompter
+	if h.script != nil {
+		pr = h.script
+	}
 	env := Env{
 		Stdin: strings.NewReader(""), Stdout: &h.out, Stderr: &h.errb,
 		Runner: h.runner, GOOS: h.goos,
 		Getwd:       func() (string, error) { return h.cwd, nil },
 		Home:        func() (string, error) { return h.home, nil },
 		Interactive: func() bool { return h.tty },
-		Prompter:    h.prompter,
+		Prompter:    pr,
 	}
 	return Main(context.Background(), env, append([]string{"ckit"}, args...))
 }

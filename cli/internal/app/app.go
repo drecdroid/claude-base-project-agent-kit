@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"runtime"
 	"runtime/debug"
@@ -31,6 +32,7 @@ type Env struct {
 	Home        func() (string, error)
 	Interactive func() bool // stdin AND stdout are terminals
 	Prompter    Prompter
+	HTTPClient  *http.Client // nil = default client with a timeout
 }
 
 // DefaultEnv is the production Env.
@@ -60,12 +62,12 @@ func Version() string {
 	return "dev"
 }
 
-// NewCommand builds the root command. Part 2 adds `new` to Commands.
+// NewCommand builds the root command.
 func NewCommand(env Env) *cli.Command {
 	a := &app{env: env}
 	return &cli.Command{
 		Name:    "ckit",
-		Usage:   "automate the Claude agent kit: config, doctor, marketplace source, plugin, open project in apps",
+		Usage:   "automate the Claude agent kit: new project, config, doctor, marketplace source, plugin, open project in apps",
 		Version: Version(),
 		Reader:  env.Stdin,
 		Writer:  env.Stdout,
@@ -78,6 +80,7 @@ func NewCommand(env Env) *cli.Command {
 			&cli.BoolFlag{Name: "yes", Aliases: []string{"y"}, Usage: "never prompt; accept confirmations (non-TTY/scripts)"},
 		},
 		Commands: []*cli.Command{
+			a.newCommand(),
 			a.configCommand(),
 			a.doctorCommand(),
 			a.sourceCommand(),
@@ -191,7 +194,7 @@ func (a *app) confirm(cmd *cli.Command, question string) error {
 	if !a.interactive(cmd) {
 		return cli.Exit(question+" (not a terminal: pass --yes to confirm)", 2)
 	}
-	ok, err := a.env.Prompter.Confirm(question)
+	ok, err := a.env.Prompter.Confirm(question, false)
 	if err != nil {
 		return err
 	}

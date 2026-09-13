@@ -1,4 +1,6 @@
-# <project name>
+# {{project_name}}
+
+{{description}}
 
 Generic agent rules (communication, agent fleet, git, process hygiene, Windows) are injected at
 session start by the `agent-kit` plugin (enabled in `.claude/settings.json`). Keep this file to

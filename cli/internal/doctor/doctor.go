@@ -73,15 +73,17 @@ const (
 	defaultForList = "source,plugin"
 )
 
-// Requirements maps a command set (`--for`) to the checks it needs. "new" is
-// part 2's `ckit new`, listed now so doctor already answers for it.
+// Requirements maps a command set (`--for`) to the checks it needs. `ckit
+// new` combines them: "new" always, "github" only when a GitHub repo is
+// requested, "source" (claude) only when the plugin install is requested.
 var Requirements = map[string][]string{
 	"source":        {CClaude},
 	"plugin":        {CClaude, CMarketplace},
 	"open-code":     {CCode},
 	"open-smartgit": {CSmartGit},
 	"open-claude":   {},
-	"new":           {CGit, CGh, CGhAuth, CClaude, CMarketplace},
+	"new":           {CGit},
+	"github":        {CGh, CGhAuth},
 }
 
 // DefaultFor is the command set checked when --for is not given.
