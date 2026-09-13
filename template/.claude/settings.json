@@ -2,8 +2,8 @@
   "extraKnownMarketplaces": {
     "claude-base-project-agent-kit": {
       "source": {
-        "source": "github",
-        "repo": "drecdroid/claude-base-project-agent-kit"
+        "source": "git",
+        "url": "https://github.com/drecdroid/claude-base-project-agent-kit.git"
       }
     }
   },

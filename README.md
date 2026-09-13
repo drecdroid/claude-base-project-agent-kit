@@ -49,21 +49,24 @@ Every command that launches or changes something takes `--dry-run`.
 
 ## Enable per project
 
-Commit this to the project's `.claude/settings.json` (already in `template/`); Claude Code prompts
-to add the marketplace and enable the plugin when the project is trusted:
+Commit this to the project's `.claude/settings.json` (already in `template/`); once the project folder is trusted,
+Claude Code adds the marketplace (HTTPS git entry, so no SSH/known_hosts needed):
 
 ```json
 {
   "extraKnownMarketplaces": {
     "claude-base-project-agent-kit": {
-      "source": { "source": "github", "repo": "drecdroid/claude-base-project-agent-kit" }
+      "source": { "source": "git", "url": "https://github.com/drecdroid/claude-base-project-agent-kit.git" }
     }
   },
   "enabledPlugins": { "agent-kit@claude-base-project-agent-kit": true }
 }
 ```
 
-Or `claude plugin install agent-kit@claude-base-project-agent-kit --scope project`.
+Trusting the folder does NOT install the plugin: since Claude Code v2.1.195 a plugin from an external
+source loads only after it is installed on that machine. Run once per machine, in the project:
+`ckit plugin install` or `claude plugin install agent-kit@claude-base-project-agent-kit --scope project`
+(`ckit new` does this for you).
 
 ## New project from the template
 
