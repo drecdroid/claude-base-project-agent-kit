@@ -59,9 +59,8 @@ func ResolveProgram(dir, prog string) (string, error) {
 	}
 	p, err := exec.LookPath(cand)
 	if err != nil {
-		if errors.Is(err, exec.ErrDot) {
-			return p, nil
-		}
+		// Includes exec.ErrDot: a bare name must never run a same-named
+		// binary sitting in the current (project) directory.
 		return "", fmt.Errorf("%w: %q (%v)", ErrNotFound, prog, err)
 	}
 	return p, nil
@@ -167,20 +166,21 @@ func exitCode(err error) (int, error) {
 	return 126, err
 }
 
-// Format renders argv for a --dry-run line: each argument quoted only when it
-// needs it, so the output is readable and unambiguous.
+// Format renders argv for a --dry-run line: an argument is single-quoted only
+// when it is empty or contains whitespace or quotes, so each token is
+// unambiguous without hiding metacharacters like & and %.
 func Format(argv []string) string {
 	parts := make([]string, len(argv))
 	for i, a := range argv {
-		if a != "" && !strings.ContainsAny(a, " \t\"'&|<>^%;()$`\\*?!#~=") {
-			parts[i] = a
-			continue
-		}
 		if a != "" && !strings.ContainsAny(a, " \t\"'") {
-			parts[i] = a // metachars but no whitespace/quotes: still one token
+			parts[i] = a
 			continue
 		}
 		parts[i] = `'` + strings.ReplaceAll(a, `'`, `'\''`) + `'`
 	}
 	return strings.Join(parts, " ")
 }
+
+// IsBatchPath reports whether a resolved program is a .cmd/.bat (Windows
+// routes it through cmd.exe; ckit builds that line itself).
+func IsBatchPath(p string) bool { return isBatchPath(p) }

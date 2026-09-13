@@ -57,12 +57,12 @@ func TestResolvePaths(t *testing.T) {
 	home, projects, cwd := setup(t)
 	abs := filepath.Join(projects, "treeboard")
 	cases := map[string]string{
-		abs:                          abs,
-		"./local-only":               filepath.Join(cwd, "local-only"),
-		".":                          cwd,
-		"../Projects/tdm-app":        filepath.Join(projects, "tdm-app"),
-		"~/Projects/treeboard":       abs,
-		filepath.Join("..", "work"):  cwd,
+		abs:                         abs,
+		"./local-only":              filepath.Join(cwd, "local-only"),
+		".":                         cwd,
+		"../Projects/tdm-app":       filepath.Join(projects, "tdm-app"),
+		"~/Projects/treeboard":      abs,
+		filepath.Join("..", "work"): cwd,
 	}
 	for in, want := range cases {
 		got, err := Resolve(in, projects, cwd, home)
